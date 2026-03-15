@@ -20,7 +20,7 @@
                     />
                 @endif
             </div>
-            @can('create', App\Models\DatabaseServer::class)
+            @can('viewForm', App\Models\DatabaseServer::class)
                 <x-button label="{{ __('Add Server') }}" link="{{ route('database-servers.create') }}" icon="o-plus" class="btn-primary btn-sm" wire:navigate />
             @endcan
         </x-slot:actions>
@@ -204,7 +204,7 @@
                             class="btn-ghost btn-sm text-success"
                         />
                     @endcan
-                    @can('update', $server)
+                    @can('viewForm', $server)
                         <x-button
                             icon="o-pencil"
                             link="{{ route('database-servers.edit', $server) }}"

@@ -19,7 +19,6 @@ class DemoModeMiddleware
         'profile.edit',
         'user-password.edit',
         'two-factor.show',
-        'api-tokens.index',
     ];
 
     /**

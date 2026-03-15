@@ -20,7 +20,7 @@
                     />
                 @endif
             </div>
-            @can('create', App\Models\Volume::class)
+            @can('viewForm', App\Models\Volume::class)
                 <x-button label="{{ __('Add Volume') }}" link="{{ route('volumes.create') }}" icon="o-plus" class="btn-primary btn-sm" wire:navigate />
             @endcan
         </x-slot:actions>
@@ -85,7 +85,7 @@
 
             @scope('actions', $volume)
                 <div class="flex gap-2 justify-end">
-                    @can('update', $volume)
+                    @can('viewForm', $volume)
                         <x-button
                             icon="o-pencil"
                             link="{{ route('volumes.edit', $volume) }}"

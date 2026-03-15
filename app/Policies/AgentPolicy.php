@@ -26,15 +26,6 @@ class AgentPolicy
     }
 
     /**
-     * Determine whether the user can view the create/edit form.
-     * Demo users can view forms but not submit them.
-     */
-    public function viewForm(User $user, ?Agent $agent = null): bool
-    {
-        return $user->isDemo() || $user->canPerformActions();
-    }
-
-    /**
      * Determine whether the user can create models.
      * Viewers and demo users cannot create.
      */

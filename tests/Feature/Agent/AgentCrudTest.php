@@ -82,11 +82,7 @@ describe('agent creation', function () {
 
         Livewire::actingAs($user)
             ->test(Create::class)
-            ->set('form.name', 'My Agent')
-            ->call('save')
-            ->assertRedirect(route('agents.index'));
-
-        $this->assertDatabaseMissing('agents', ['name' => 'My Agent']);
+            ->assertForbidden();
     });
 
     test('viewers cannot create agents', function () {

@@ -7,7 +7,6 @@ use App\Livewire\Forms\AgentForm;
 use App\Models\Agent;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Mary\Traits\Toast;
@@ -25,19 +24,14 @@ class Edit extends Component
 
     public function mount(Agent $agent): void
     {
-        $this->authorize('viewForm', $agent);
+        $this->authorize('update', $agent);
 
         $this->form->setAgent($agent);
     }
 
     public function save(): void
     {
-        if (Gate::denies('update', $this->form->agent)) {
-            session()->flash('demo_notice', __('Demo mode is enabled. Changes cannot be saved.'));
-            $this->redirect(route('agents.index'), navigate: true);
-
-            return;
-        }
+        $this->authorize('update', $this->form->agent);
 
         $this->form->update();
 
@@ -53,12 +47,7 @@ class Edit extends Component
 
     public function regenerateToken(): void
     {
-        if (Gate::denies('update', $this->form->agent)) {
-            session()->flash('demo_notice', __('Demo mode is enabled. Changes cannot be saved.'));
-            $this->redirect(route('agents.index'), navigate: true);
-
-            return;
-        }
+        $this->authorize('update', $this->form->agent);
 
         $this->form->agent->tokens()->delete();
 

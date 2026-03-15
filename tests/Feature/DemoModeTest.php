@@ -170,10 +170,10 @@ test('demo user cannot access two-factor settings', function () {
     $response->assertForbidden();
 });
 
-test('demo user cannot access api tokens settings', function () {
+test('demo user can access api tokens settings', function () {
     $this->actingAs($this->demoUser)
         ->get(route('api-tokens.index'))
-        ->assertForbidden();
+        ->assertOk();
 });
 
 test('demo user can access preferences settings', function () {
