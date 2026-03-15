@@ -60,7 +60,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('agents.index');
 
     // API Tokens
-    Route::livewire('api-tokens', \App\Livewire\ApiToken\Index::class)
+    Route::livewire('tokens', \App\Livewire\ApiToken\Index::class)
         ->name('api-tokens.index');
 });
 

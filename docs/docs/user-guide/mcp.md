@@ -32,7 +32,7 @@ The MCP server is available at `/mcp`, protected by [Sanctum](https://laravel.co
 
 ### 1. Create an API Token
 
-Go to **Settings → API Tokens** (`/api-tokens`) in the Databasement UI and create a new token.
+Go to **Settings → API Tokens** in the Databasement UI and create a new token.
 
 ### 2. Configure Your AI Client
 
