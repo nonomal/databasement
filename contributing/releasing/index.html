@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.9.2">
 <title data-rh="true">Releasing | Databasement</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://david-crty.github.io/databasement/contributing/releasing"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Releasing | Databasement"><meta data-rh="true" name="description" content="This guide explains how releases work and how Docker images and Helm charts are versioned."><meta data-rh="true" property="og:description" content="This guide explains how releases work and how Docker images and Helm charts are versioned."><link data-rh="true" rel="icon" href="/databasement/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://david-crty.github.io/databasement/contributing/releasing"><link data-rh="true" rel="alternate" href="https://david-crty.github.io/databasement/contributing/releasing" hreflang="en"><link data-rh="true" rel="alternate" href="https://david-crty.github.io/databasement/contributing/releasing" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Releasing","item":"https://david-crty.github.io/databasement/contributing/releasing"}]}</script><link rel="stylesheet" href="/databasement/assets/css/styles.4b829eaa.css">
-<script src="/databasement/assets/js/runtime~main.5523de09.js" defer="defer"></script>
-<script src="/databasement/assets/js/main.21f655af.js" defer="defer"></script>
+<script src="/databasement/assets/js/runtime~main.f45e7334.js" defer="defer"></script>
+<script src="/databasement/assets/js/main.e311fd4d.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg style="display: none;"><defs>
@@ -24,13 +24,14 @@
 </ol>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="docker-image-tagging">Docker Image Tagging<a href="#docker-image-tagging" class="hash-link" aria-label="Direct link to Docker Image Tagging" title="Direct link to Docker Image Tagging" translate="no">​</a></h2>
 <p>Both the base image (<code>davidcrty/databasement-php</code>) and the app image (<code>davidcrty/databasement</code>) follow the same tagging strategy:</p>
-<table><thead><tr><th>Trigger</th><th>Tags produced</th><th>Example</th></tr></thead><tbody><tr><td>Push tag <code>v0.2.0</code></td><td><code>:0.2.0</code>, <code>:0.2</code>, <code>:0</code></td><td><code>davidcrty/databasement:0.2.0</code></td></tr><tr><td>Push to <code>main</code></td><td><code>:latest</code></td><td><code>davidcrty/databasement:latest</code></td></tr><tr><td>Push to any other branch</td><td><code>:&lt;branch-slug&gt;</code></td><td><code>davidcrty/databasement:feature-foo</code></td></tr></tbody></table>
+<table><thead><tr><th>Trigger</th><th>Tags produced</th><th>Example</th></tr></thead><tbody><tr><td>Push tag <code>v0.2.0</code></td><td><code>:0.2.0</code>, <code>:0.2</code>, <code>:0</code>, <code>:latest</code></td><td><code>davidcrty/databasement:0.2.0</code></td></tr><tr><td>Push to <code>main</code></td><td><code>:latest</code></td><td><code>davidcrty/databasement:latest</code></td></tr><tr><td>Push to any other branch</td><td><code>:&lt;branch-slug&gt;</code></td><td><code>davidcrty/databasement:feature-foo</code></td></tr></tbody></table>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="semver-tags">Semver tags<a href="#semver-tags" class="hash-link" aria-label="Direct link to Semver tags" title="Direct link to Semver tags" translate="no">​</a></h3>
-<p>When a version tag is pushed, Docker images are tagged with the full version, the major.minor, and the major number. For example, pushing <code>v1.2.3</code> produces:</p>
+<p>When a version tag is pushed, Docker images are tagged with the full version, the major.minor, the major number, and <code>latest</code>. For example, pushing <code>v1.2.3</code> produces:</p>
 <ul>
 <li class=""><code>davidcrty/databasement:1.2.3</code> — exact version (pinned)</li>
 <li class=""><code>davidcrty/databasement:1.2</code> — latest patch in the 1.2.x line</li>
 <li class=""><code>davidcrty/databasement:1</code> — latest release in the 1.x.x line</li>
+<li class=""><code>davidcrty/databasement:latest</code> — most recent release (with version in footer)</li>
 </ul>
 <p>This allows users and tools like <a href="https://docs.renovatebot.com/" target="_blank" rel="noopener noreferrer" class="">Renovate</a> to track updates at their preferred level of stability.</p>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="helm-chart-versioning">Helm Chart Versioning<a href="#helm-chart-versioning" class="hash-link" aria-label="Direct link to Helm Chart Versioning" title="Direct link to Helm Chart Versioning" translate="no">​</a></h2>
