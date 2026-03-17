@@ -27,6 +27,7 @@ runs:
           echo "${IMAGE}:${VERSION}" >> $GITHUB_OUTPUT
           echo "${IMAGE}:${MINOR}" >> $GITHUB_OUTPUT
           echo "${IMAGE}:${MAJOR}" >> $GITHUB_OUTPUT
+          echo "${IMAGE}:latest" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         elif [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
           echo "tags<<EOF" >> $GITHUB_OUTPUT

@@ -27,17 +27,18 @@ Both the base image (`davidcrty/databasement-php`) and the app image (`davidcrty
 
 | Trigger | Tags produced | Example |
 |---------|--------------|---------|
-| Push tag `v0.2.0` | `:0.2.0`, `:0.2`, `:0` | `davidcrty/databasement:0.2.0` |
+| Push tag `v0.2.0` | `:0.2.0`, `:0.2`, `:0`, `:latest` | `davidcrty/databasement:0.2.0` |
 | Push to `main` | `:latest` | `davidcrty/databasement:latest` |
 | Push to any other branch | `:<branch-slug>` | `davidcrty/databasement:feature-foo` |
 
 ### Semver tags
 
-When a version tag is pushed, Docker images are tagged with the full version, the major.minor, and the major number. For example, pushing `v1.2.3` produces:
+When a version tag is pushed, Docker images are tagged with the full version, the major.minor, the major number, and `latest`. For example, pushing `v1.2.3` produces:
 
 - `davidcrty/databasement:1.2.3` — exact version (pinned)
 - `davidcrty/databasement:1.2` — latest patch in the 1.2.x line
 - `davidcrty/databasement:1` — latest release in the 1.x.x line
+- `davidcrty/databasement:latest` — most recent release (with version in footer)
 
 This allows users and tools like [Renovate](https://docs.renovatebot.com/) to track updates at their preferred level of stability.
 
