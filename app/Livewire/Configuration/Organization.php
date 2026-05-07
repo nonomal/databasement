@@ -32,6 +32,8 @@ class Organization extends Component
 
     public ?string $deleteOrgId = null;
 
+    public bool $deleteOrgHasResources = false;
+
     public function mount(): void
     {
         $this->authorize('viewAny', OrganizationModel::class);
@@ -115,27 +117,26 @@ class Organization extends Component
 
     public function confirmDelete(string $orgId): void
     {
-        $org = OrganizationModel::withCount([
-            'databaseServers' => fn ($q) => $q->withoutGlobalScope(OrganizationScope::class),
-            'volumes' => fn ($q) => $q->withoutGlobalScope(OrganizationScope::class),
-            'agents' => fn ($q) => $q->withoutGlobalScope(OrganizationScope::class),
-        ])->findOrFail($orgId);
+        $org = OrganizationModel::findOrFail($orgId);
 
         $this->authorize('delete', $org);
 
         $this->deleteOrgId = $orgId;
+        $this->deleteOrgHasResources = $org->hasResources();
         $this->showDeleteModal = true;
     }
 
     public function deleteOrganization(): mixed
     {
-        $org = OrganizationModel::withCount([
-            'databaseServers' => fn ($q) => $q->withoutGlobalScope(OrganizationScope::class),
-            'volumes' => fn ($q) => $q->withoutGlobalScope(OrganizationScope::class),
-            'agents' => fn ($q) => $q->withoutGlobalScope(OrganizationScope::class),
-        ])->findOrFail($this->deleteOrgId);
+        $org = OrganizationModel::findOrFail($this->deleteOrgId);
 
         $this->authorize('delete', $org);
+
+        if ($org->hasResources()) {
+            $this->error(__('This organization still has resources and cannot be deleted.'));
+
+            return null;
+        }
 
         $org->delete();
 

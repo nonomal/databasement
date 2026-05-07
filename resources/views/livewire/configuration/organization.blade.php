@@ -42,9 +42,7 @@
                 @unless($org->is_main)
                     <div class="text-right">
                         <x-button icon="o-pencil" class="btn-ghost btn-xs" wire:click="openEditModal('{{ $org->id }}')" :tooltip="__('Edit')" />
-                        @if(!$org->hasResources())
-                            <x-button icon="o-trash" class="btn-ghost btn-xs text-error" wire:click="confirmDelete('{{ $org->id }}')" :tooltip="__('Delete')" />
-                        @endif
+                        <x-button icon="o-trash" class="btn-ghost btn-xs text-error" wire:click="confirmDelete('{{ $org->id }}')" :tooltip="__('Delete')" />
                     </div>
                 @endunless
             @endscope
@@ -71,10 +69,18 @@
 
     {{-- Delete Confirmation --}}
     <x-modal wire:model="showDeleteModal" :title="__('Delete Organization')">
-        <p>{{ __('Are you sure you want to delete this organization? This action cannot be undone.') }}</p>
+        @if($deleteOrgHasResources)
+            <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                {{ __('This organization still has servers, volumes, or agents. Remove all resources before deleting it.') }}
+            </x-alert>
+        @else
+            <p>{{ __('Are you sure you want to delete this organization? This action cannot be undone.') }}</p>
+        @endif
         <x-slot:actions>
             <x-button :label="__('Cancel')" @click="$wire.showDeleteModal = false" />
-            <x-button :label="__('Delete')" class="btn-error" wire:click="deleteOrganization" />
+            @unless($deleteOrgHasResources)
+                <x-button :label="__('Delete')" class="btn-error" wire:click="deleteOrganization" />
+            @endunless
         </x-slot:actions>
     </x-modal>
 </div>

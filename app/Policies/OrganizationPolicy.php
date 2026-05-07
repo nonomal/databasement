@@ -40,7 +40,7 @@ class OrganizationPolicy
 
     /**
      * Determine whether the user can delete the organization.
-     * Only super admins can delete non-main, empty orgs.
+     * Only super admins can delete non-main orgs.
      */
     public function delete(User $user, Organization $organization): bool
     {
@@ -48,12 +48,6 @@ class OrganizationPolicy
             return false;
         }
 
-        // Main org cannot be deleted
-        if ($organization->is_main) {
-            return false;
-        }
-
-        // Org must be empty (no resources)
-        return ! $organization->hasResources();
+        return ! $organization->is_main;
     }
 }

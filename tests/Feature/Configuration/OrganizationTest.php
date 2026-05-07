@@ -90,7 +90,7 @@ test('super admin cannot delete main organization', function () {
         ->assertForbidden();
 });
 
-test('super admin cannot delete organization with resources', function () {
+test('super admin sees warning when deleting organization with resources', function () {
     $admin = User::factory()->superAdmin()->create();
     $org = OrganizationModel::factory()->create();
     DatabaseServer::factory()->create(['organization_id' => $org->id]);
@@ -98,5 +98,19 @@ test('super admin cannot delete organization with resources', function () {
     Livewire::actingAs($admin)
         ->test(Organization::class)
         ->call('confirmDelete', $org->id)
-        ->assertForbidden();
+        ->assertSet('deleteOrgHasResources', true)
+        ->assertSee('still has servers, volumes, or agents. Remove all resources before deleting it.');
+});
+
+test('super admin cannot force delete organization with resources', function () {
+    $admin = User::factory()->superAdmin()->create();
+    $org = OrganizationModel::factory()->create();
+    DatabaseServer::factory()->create(['organization_id' => $org->id]);
+
+    Livewire::actingAs($admin)
+        ->test(Organization::class)
+        ->set('deleteOrgId', $org->id)
+        ->call('deleteOrganization');
+
+    expect(OrganizationModel::find($org->id))->not->toBeNull();
 });
