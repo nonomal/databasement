@@ -61,6 +61,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('configuration.notification');
     Route::livewire('configuration/authentication', \App\Livewire\Configuration\Authentication::class)
         ->name('configuration.authentication');
+    Route::livewire('configuration/organizations', \App\Livewire\Configuration\Organization::class)
+        ->name('configuration.organizations');
 
     // Agents
     Route::livewire('agents', \App\Livewire\Agent\Index::class)

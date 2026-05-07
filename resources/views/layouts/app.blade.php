@@ -32,6 +32,18 @@
             {{-- BRAND --}}
             <x-app-brand class="px-5 pt-4" />
 
+            {{-- ORG SWITCHER --}}
+            @if($user = auth()->user())
+                @php
+                    $showSwitcher = $user->isSuperAdmin() || $user->organizations()->count() > 1;
+                @endphp
+                @if($showSwitcher)
+                    <div class="px-4 pt-3">
+                        <livewire:organization-switcher />
+                    </div>
+                @endif
+            @endif
+
             {{-- MAIN MENU --}}
             <x-menu activate-by-route class="flex-1">
                 <x-menu-separator />
@@ -39,7 +51,9 @@
                 <x-menu-item title="{{ __('Database Servers') }}" icon="o-server-stack" link="{{ route('database-servers.index') }}" wire:navigate />
                 <livewire:menu.jobs-menu-item />
                 <x-menu-item title="{{ __('Volumes') }}" icon="o-circle-stack" link="{{ route('volumes.index') }}" wire:navigate />
-                <x-menu-item title="{{ __('Users') }}" icon="o-users" link="{{ route('users.index') }}" wire:navigate />
+                @can('viewAny', \App\Models\User::class)
+                    <x-menu-item title="{{ __('Users') }}" icon="o-users" link="{{ route('users.index') }}" wire:navigate />
+                @endcan
                 <x-menu-item title="{{ __('Agents') }}" icon="o-cpu-chip" link="{{ route('agents.index') }}" wire:navigate :badge="__('Beta')" badge-classes="badge-warning badge-soft badge-xs" />
                 <x-menu-separator />
                 <x-menu-item :title="__('Configuration')" icon="o-cog-6-tooth" :link="route('configuration.application')" wire:navigate />
@@ -54,7 +68,7 @@
                         <x-menu-item title="{{ __('Preferences') }}" icon="o-paint-brush" link="{{ route('preferences.edit') }}" wire:navigate />
                         @unless($user->isDemo())
                             <x-menu-item title="{{ __('Profile') }}" icon="o-user" link="{{ route('profile.edit') }}" wire:navigate />
-                            @unless($user->isOAuthOnly())
+                            @unless($user->isOAuth())
                                 <x-menu-item title="{{ __('Password') }}" icon="o-key" link="{{ route('user-password.edit') }}" wire:navigate />
                                 @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
                                     <x-menu-item title="{{ __('Two-Factor Auth') }}" icon="o-shield-check" link="{{ route('two-factor.show') }}" wire:navigate />
