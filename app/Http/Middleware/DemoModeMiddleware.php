@@ -64,7 +64,7 @@ class DemoModeMiddleware
         );
 
         $user->organizations()->syncWithoutDetaching([
-            Organization::main()->id => ['role' => UserRole::Demo->value],
+            Organization::default()->id => ['role' => UserRole::Demo->value],
         ]);
     }
 }

@@ -39,10 +39,10 @@ class OrganizationSwitcher extends Component
         $user = auth()->user();
 
         if ($user->isSuperAdmin()) {
-            return Organization::orderByDesc('is_main')->orderBy('name')->get(['id', 'name'])->toArray();
+            return Organization::orderByDesc('is_default')->orderBy('name')->get(['id', 'name'])->toArray();
         }
 
-        return $user->organizations()->orderByDesc('organizations.is_main')->orderBy('organizations.name')->get(['organizations.id', 'organizations.name'])->toArray();
+        return $user->organizations()->orderByDesc('organizations.is_default')->orderBy('organizations.name')->get(['organizations.id', 'organizations.name'])->toArray();
     }
 
     public function render(): View

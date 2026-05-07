@@ -213,7 +213,7 @@ test('first admin can register even when demo mode is enabled', function () {
     // User should be authenticated as the new admin (not demo user)
     $this->assertAuthenticated();
     expect(auth()->user()->email)->toBe('admin@example.com')
-        ->and(auth()->user()->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Admin)
+        ->and(auth()->user()->roleIn(\App\Models\Organization::default()))->toBe(UserRole::Admin)
         ->and(auth()->user()->isDemo())->toBeFalse();
 
     // Should be able to access dashboard
@@ -244,5 +244,5 @@ test('demo user is created when visiting login page in demo mode', function () {
         'email' => 'auto-demo@example.com',
     ]);
     $demoUser = User::where('email', 'auto-demo@example.com')->first();
-    expect($demoUser->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Demo);
+    expect($demoUser->roleIn(\App\Models\Organization::default()))->toBe(UserRole::Demo);
 });

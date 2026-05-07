@@ -115,9 +115,9 @@ class CurrentOrganization
             return;
         }
 
-        // 3. Super admins with no membership fall back to main org
+        // 3. Super admins with no membership fall back to default org
         if ($user->isSuperAdmin()) {
-            $this->switchTo(Organization::main());
+            $this->switchTo(Organization::default());
 
             return;
         }

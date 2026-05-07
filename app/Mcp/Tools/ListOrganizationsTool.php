@@ -31,7 +31,7 @@ class ListOrganizationsTool extends Tool
             $active = $org->id === $currentOrgId ? ' **(active)**' : '';
             $role = $org->pivot->role ?? 'unknown';
 
-            return "- **{$org->name}** (ID: {$org->id}){$active}\n  Role: {$role}".($org->is_main ? ' | Main organization' : '');
+            return "- **{$org->name}** (ID: {$org->id}){$active}\n  Role: {$role}".($org->is_default ? ' | Default organization' : '');
         });
 
         return Response::text("Your Organizations ({$orgs->count()}):\n\n".implode("\n\n", $lines->all()));

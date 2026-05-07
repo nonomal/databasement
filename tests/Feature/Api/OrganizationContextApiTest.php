@@ -6,15 +6,15 @@ use App\Models\Organization;
 use App\Models\User;
 
 beforeEach(function () {
-    $this->mainOrg = Organization::main();
+    $this->defaultOrg = Organization::default();
     $this->otherOrg = Organization::factory()->create(['name' => 'Other Org']);
 });
 
 describe('org_id query parameter', function () {
-    test('defaults to main org when no org_id is provided', function () {
+    test('defaults to default org when no org_id is provided', function () {
         $user = User::factory()->create();
 
-        DatabaseServer::factory()->create(['name' => 'Main Server', 'organization_id' => $this->mainOrg->id]);
+        DatabaseServer::factory()->create(['name' => 'Main Server', 'organization_id' => $this->defaultOrg->id]);
         DatabaseServer::factory()->create(['name' => 'Other Server', 'organization_id' => $this->otherOrg->id]);
 
         $response = $this->actingAs($user, 'sanctum')
@@ -28,7 +28,7 @@ describe('org_id query parameter', function () {
     test('org_id scopes resources to the specified organization', function () {
         $user = User::factory()->superAdmin()->create();
 
-        DatabaseServer::factory()->create(['name' => 'Main Server', 'organization_id' => $this->mainOrg->id]);
+        DatabaseServer::factory()->create(['name' => 'Main Server', 'organization_id' => $this->defaultOrg->id]);
         DatabaseServer::factory()->create(['name' => 'Other Server', 'organization_id' => $this->otherOrg->id]);
 
         $response = $this->actingAs($user, 'sanctum')
@@ -73,7 +73,7 @@ describe('cross-org resource isolation', function () {
     test('user cannot see database servers from another organization', function () {
         $user = User::factory()->create();
 
-        DatabaseServer::factory()->create(['name' => 'My Server', 'organization_id' => $this->mainOrg->id]);
+        DatabaseServer::factory()->create(['name' => 'My Server', 'organization_id' => $this->defaultOrg->id]);
         DatabaseServer::factory()->create(['name' => 'Their Server', 'organization_id' => $this->otherOrg->id]);
 
         $response = $this->actingAs($user, 'sanctum')
@@ -111,10 +111,10 @@ describe('cross-org resource isolation', function () {
         $user = User::factory()->create();
         $user->organizations()->attach($this->otherOrg->id, ['role' => UserRole::Member]);
 
-        DatabaseServer::factory()->create(['name' => 'Main Server', 'organization_id' => $this->mainOrg->id]);
+        DatabaseServer::factory()->create(['name' => 'Main Server', 'organization_id' => $this->defaultOrg->id]);
         DatabaseServer::factory()->create(['name' => 'Other Server', 'organization_id' => $this->otherOrg->id]);
 
-        // Default: main org
+        // Default: default org
         $this->actingAs($user, 'sanctum')
             ->getJson('/api/v1/database-servers')
             ->assertOk()

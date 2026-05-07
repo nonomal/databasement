@@ -33,7 +33,7 @@ class DatabaseServerFactory extends Factory
             'description' => fake()->optional()->sentence(),
             'notification_trigger' => 'failure',
             'notification_channel_selection' => 'all',
-            'organization_id' => fn () => Organization::first()?->id ?? Organization::factory()->main(),
+            'organization_id' => fn () => Organization::first()?->id ?? Organization::factory()->default(),
         ];
     }
 

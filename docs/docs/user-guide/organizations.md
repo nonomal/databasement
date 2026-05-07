@@ -10,7 +10,7 @@ Databasement supports multi-organization setups, allowing you to isolate resourc
 
 - Every resource belongs to exactly one organization
 - Users can belong to multiple organizations with different roles in each
-- A **main organization** is created automatically on first install
+- A **default organization** is created automatically on first install
 - Super admins can create and manage additional organizations
 
 ## User Roles
@@ -40,7 +40,7 @@ Super admins can manage organizations from **Configuration > Organizations**:
 - Rename existing organizations
 - Delete empty organizations (all servers, volumes, and agents must be removed first)
 
-The main organization cannot be deleted or renamed. Organization names must be unique.
+The default organization cannot be renamed or deleted. Organization names must be unique.
 
 ## User Management
 
@@ -70,7 +70,7 @@ API requests target an organization using the `?org_id=` query parameter (by org
 GET /api/v1/database-servers?org_id=01JA2B3C4D5E6F7G8H9J0KMNPQ
 ```
 
-Alternatively, pass the `X-Organization-Id` header with the same value. If neither is provided, the main organization is used.
+Alternatively, pass the `X-Organization-Id` header with the same value. If neither is provided, the default organization is used.
 
 You can find the organization ID in **Configuration > Organizations**.
 
@@ -97,7 +97,7 @@ Agents belong to a single organization. They only execute jobs for servers withi
 
 ## OAuth / OIDC
 
-Auto-created OAuth users join the main organization by default. Set the `OAUTH_DEFAULT_ORGANIZATION_ID` environment variable to assign them to a different org instead.
+Auto-created OAuth users join the default organization by default. Set the `OAUTH_DEFAULT_ORGANIZATION_ID` environment variable to assign them to a different org instead.
 
 ## CLI Commands
 
@@ -107,6 +107,6 @@ Artisan commands (`backup:run`, `cleanup:snapshots`, `verify:files`) operate glo
 
 On first install:
 
-1. A **Main** organization is created automatically
-2. The first registered user becomes a super admin, attached to the main org as admin
+1. A **Default** organization is created automatically
+2. The first registered user becomes a super admin, attached to the default org as admin
 3. Additional organizations can be created from Configuration

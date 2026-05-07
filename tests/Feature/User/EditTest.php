@@ -78,7 +78,7 @@ test('can update user name email and role', function () {
     $user->refresh();
     expect($user->name)->toBe('Updated Name')
         ->and($user->email)->toBe('updated@example.com')
-        ->and($user->roleIn(Organization::main()))->toBe(UserRole::Viewer);
+        ->and($user->roleIn(Organization::default()))->toBe(UserRole::Viewer);
 });
 
 test('cannot remove last super admin', function () {
@@ -107,7 +107,7 @@ test('can demote super admin when multiple exist', function () {
         ->assertRedirect(route('users.index'));
 
     $anotherAdmin->refresh();
-    expect($anotherAdmin->roleIn(Organization::main()))->toBe(UserRole::Member);
+    expect($anotherAdmin->roleIn(Organization::default()))->toBe(UserRole::Member);
 });
 
 test('can promote user to admin', function () {
@@ -121,7 +121,7 @@ test('can promote user to admin', function () {
         ->assertRedirect(route('users.index'));
 
     $member->refresh();
-    expect($member->roleIn(Organization::main()))->toBe(UserRole::Admin);
+    expect($member->roleIn(Organization::default()))->toBe(UserRole::Admin);
 });
 
 test('oauth user email field is disabled', function () {

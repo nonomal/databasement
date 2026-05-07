@@ -34,13 +34,13 @@ class OrganizationPolicy
             return false;
         }
 
-        // Main org name cannot be changed
-        return ! $organization->is_main;
+        // Default org name cannot be changed
+        return ! $organization->is_default;
     }
 
     /**
      * Determine whether the user can delete the organization.
-     * Only super admins can delete non-main orgs.
+     * Only super admins can delete non-default orgs.
      */
     public function delete(User $user, Organization $organization): bool
     {
@@ -48,6 +48,6 @@ class OrganizationPolicy
             return false;
         }
 
-        return ! $organization->is_main;
+        return ! $organization->is_default;
     }
 }

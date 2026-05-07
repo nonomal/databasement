@@ -51,7 +51,7 @@ class Organization extends Component
             'volumes' => fn ($q) => $q->withoutGlobalScope(OrganizationScope::class),
             'agents' => fn ($q) => $q->withoutGlobalScope(OrganizationScope::class),
         ])
-            ->orderByDesc('is_main')
+            ->orderByDesc('is_default')
             ->orderBy('name')
             ->get();
     }

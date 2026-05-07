@@ -21,13 +21,13 @@
             @scope('cell_name', $org)
                 <div class="flex items-center gap-2">
                     {{ $org->name }}
-                    @if($org->is_main)
+                    @if($org->is_default)
                         <x-popover>
                             <x-slot:trigger>
                                 <x-icon name="o-lock-closed" class="w-4 h-4 text-base-content/50 cursor-pointer" />
                             </x-slot:trigger>
                             <x-slot:content>
-                                {{ __('The main organization cannot be edited or deleted.') }}
+                                {{ __('The default organization cannot be edited or deleted.') }}
                             </x-slot:content>
                         </x-popover>
                     @endif
@@ -39,7 +39,7 @@
             @endscope
 
             @scope('cell_actions', $org)
-                @unless($org->is_main)
+                @unless($org->is_default)
                     <div class="text-right">
                         <x-button icon="o-pencil" class="btn-ghost btn-xs" wire:click="openEditModal('{{ $org->id }}')" :tooltip="__('Edit')" />
                         <x-button icon="o-trash" class="btn-ghost btn-xs text-error" wire:click="confirmDelete('{{ $org->id }}')" :tooltip="__('Delete')" />

@@ -140,7 +140,7 @@ OAUTH_DEFAULT_ROLE=member  # Options: viewer, member, admin
 
 ### Default Organization
 
-By default, auto-created OAuth users join the main organization. To assign them to a different organization instead, set:
+By default, auto-created OAuth users join the default organization. To assign them to a different organization instead, set:
 
 ```env
 OAUTH_DEFAULT_ORGANIZATION_ID=01JA2B3C4D5E6F7G8H9J0KMNPQ  # Organization ULID

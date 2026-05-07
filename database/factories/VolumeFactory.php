@@ -23,7 +23,7 @@ class VolumeFactory extends Factory
             'config' => [
                 'path' => $this->createTempDirectory(),
             ],
-            'organization_id' => fn () => Organization::first()?->id ?? Organization::factory()->main(),
+            'organization_id' => fn () => Organization::first()?->id ?? Organization::factory()->default(),
         ];
     }
 

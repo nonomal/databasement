@@ -50,7 +50,7 @@ describe('invite new user', function () {
         $user = User::where('email', 'newuser@example.com')->first();
         expect($user)->not->toBeNull()
             ->and($user->name)->toBe('New User')
-            ->and($user->roleIn(Organization::main()))->toBe(UserRole::Member)
+            ->and($user->roleIn(Organization::default()))->toBe(UserRole::Member)
             ->and($user->invitation_token)->not->toBeNull()
             ->and($user->password)->toBeNull();
     });
@@ -100,7 +100,7 @@ describe('add existing user', function () {
             ->call('addExisting')
             ->assertHasNoErrors();
 
-        expect($existingUser->roleIn(Organization::main()))->toBe(UserRole::Viewer);
+        expect($existingUser->roleIn(Organization::default()))->toBe(UserRole::Viewer);
     });
 
     test('rejects adding user already in organization', function () {

@@ -21,7 +21,7 @@ class OrganizationResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'is_main' => $this->is_main,
+            'is_default' => $this->is_default,
             'role' => $this->whenPivotLoaded('organization_user', fn () => $this->pivot->role), // @phpstan-ignore property.notFound
         ];
     }

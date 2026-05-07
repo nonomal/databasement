@@ -48,10 +48,10 @@ class CreateNewUser implements CreatesNewUsers
 
         $createDemoBackup = ! empty($input['create_demo_backup']);
 
-        // Ensure main org exists (migration creates it, but handle fresh install)
-        $mainOrg = Organization::firstOrCreate(
-            ['is_main' => true],
-            ['name' => 'Main']
+        // Ensure default org exists (migration creates it, but handle fresh install)
+        $defaultOrg = Organization::firstOrCreate(
+            ['is_default' => true],
+            ['name' => 'Default']
         );
 
         // First user is always super_admin
@@ -64,7 +64,7 @@ class CreateNewUser implements CreatesNewUsers
         ]);
 
         // Attach to main org as admin
-        $user->organizations()->attach($mainOrg->id, ['role' => UserRole::Admin->value]);
+        $user->organizations()->attach($defaultOrg->id, ['role' => UserRole::Admin->value]);
 
         if ($createDemoBackup) {
             try {

@@ -100,8 +100,8 @@ expect()->extend('toBeOne', function () {
 function setupOrgContext(): \App\Models\Organization
 {
     $org = \App\Models\Organization::firstOrCreate(
-        ['is_main' => true],
-        ['name' => 'Main'],
+        ['is_default' => true],
+        ['name' => 'Default'],
     );
 
     $currentOrg = app(\App\Services\CurrentOrganization::class);

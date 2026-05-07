@@ -95,7 +95,7 @@ test('verify files button prevents rapid re-dispatch via cache lock', function (
 
     $admin = User::factory()->create(['role' => UserRole::Admin]);
 
-    $org = \App\Models\Organization::main();
+    $org = \App\Models\Organization::default();
     Cache::lock('verify-snapshot-files:'.$org->id, 300)->get();
 
     Livewire::withoutLazyLoading()

@@ -18,18 +18,18 @@ class OrganizationFactory extends Factory
     {
         return [
             'name' => fake()->unique()->company(),
-            'is_main' => false,
+            'is_default' => false,
         ];
     }
 
     /**
-     * Configure the organization as the main organization.
+     * Configure the organization as the default organization.
      */
-    public function main(): static
+    public function default(): static
     {
         return $this->state(fn () => [
-            'name' => 'Main',
-            'is_main' => true,
+            'name' => 'Default',
+            'is_default' => true,
         ]);
     }
 }

@@ -28,7 +28,7 @@ test('first user can register as admin', function () {
     // First user should be super admin
     $user = auth()->user();
     expect($user->super_admin)->toBeTrue()
-        ->and($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Admin);
+        ->and($user->roleIn(\App\Models\Organization::default()))->toBe(UserRole::Admin);
 });
 
 test('first user can create demo backup during registration', function () {

@@ -19,7 +19,7 @@ class AgentFactory extends Factory
     {
         return [
             'name' => fake()->company().' Agent',
-            'organization_id' => fn () => Organization::first()?->id ?? Organization::factory()->main(),
+            'organization_id' => fn () => Organization::first()?->id ?? Organization::factory()->default(),
         ];
     }
 

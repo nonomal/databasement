@@ -219,7 +219,7 @@ class OAuthService
             }
         }
 
-        return Organization::main();
+        return Organization::default();
     }
 
     /**

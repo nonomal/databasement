@@ -23,7 +23,7 @@ test('super admin can access organizations page', function () {
     Livewire::actingAs($admin)
         ->test(Organization::class)
         ->assertOk()
-        ->assertSee('Main');
+        ->assertSee('Default');
 });
 
 test('super admin can create an organization', function () {
@@ -59,11 +59,11 @@ test('super admin can rename a non-main organization', function () {
 
 test('super admin cannot rename the main organization', function () {
     $admin = User::factory()->superAdmin()->create();
-    $mainOrg = OrganizationModel::main();
+    $defaultOrg = OrganizationModel::default();
 
     Livewire::actingAs($admin)
         ->test(Organization::class)
-        ->call('openEditModal', $mainOrg->id)
+        ->call('openEditModal', $defaultOrg->id)
         ->assertForbidden();
 });
 
@@ -82,11 +82,11 @@ test('super admin can delete an empty non-main organization', function () {
 
 test('super admin cannot delete main organization', function () {
     $admin = User::factory()->superAdmin()->create();
-    $mainOrg = OrganizationModel::main();
+    $defaultOrg = OrganizationModel::default();
 
     Livewire::actingAs($admin)
         ->test(Organization::class)
-        ->call('confirmDelete', $mainOrg->id)
+        ->call('confirmDelete', $defaultOrg->id)
         ->assertForbidden();
 });
 

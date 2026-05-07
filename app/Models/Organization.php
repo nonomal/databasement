@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property string $id
  * @property string $name
- * @property bool $is_main
+ * @property bool $is_default
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, User> $users
@@ -44,13 +44,13 @@ class Organization extends Model
 
     protected $fillable = [
         'name',
-        'is_main',
+        'is_default',
     ];
 
     protected function casts(): array
     {
         return [
-            'is_main' => 'boolean',
+            'is_default' => 'boolean',
         ];
     }
 
@@ -95,11 +95,11 @@ class Organization extends Model
     }
 
     /**
-     * Get the main organization.
+     * Get the default organization.
      */
-    public static function main(): self
+    public static function default(): self
     {
-        return static::where('is_main', true)->firstOrFail();
+        return static::where('is_default', true)->firstOrFail();
     }
 
     /**

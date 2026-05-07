@@ -69,7 +69,7 @@ class UserFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (User $user) {
-            $org = rescue(fn () => Organization::main(), fn () => Organization::factory()->main()->create());
+            $org = rescue(fn () => Organization::default(), fn () => Organization::factory()->default()->create());
             $role = $user->pendingPivotRole ?? UserRole::Member;
             $user->pendingPivotRole = null;
 

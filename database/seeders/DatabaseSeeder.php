@@ -17,10 +17,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Main organization
-        $mainOrg = Organization::firstOrCreate(
-            ['is_main' => true],
-            ['name' => 'Main'],
+        // Default organization
+        $defaultOrg = Organization::firstOrCreate(
+            ['is_default' => true],
+            ['name' => 'Default'],
         );
 
         // Users (all with password "password", no 2FA)
@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Local',
             'type' => 'local',
             'config' => ['path' => '/data/backups'],
-            'organization_id' => $mainOrg->id,
+            'organization_id' => $defaultOrg->id,
         ]);
 
         $dailySchedule = BackupSchedule::firstOrCreate(
@@ -60,7 +60,7 @@ class DatabaseSeeder extends Seeder
             'database_type' => 'mysql',
             'username' => 'root',
             'password' => 'root',
-            'organization_id' => $mainOrg->id,
+            'organization_id' => $defaultOrg->id,
         ]);
 
         // PostgreSQL server (from docker-compose)
@@ -71,7 +71,7 @@ class DatabaseSeeder extends Seeder
             'database_type' => 'postgres',
             'username' => 'root',
             'password' => 'root',
-            'organization_id' => $mainOrg->id,
+            'organization_id' => $defaultOrg->id,
         ]);
 
         // SQLite server
@@ -85,7 +85,7 @@ class DatabaseSeeder extends Seeder
             'port' => 0,
             'username' => '',
             'password' => '',
-            'organization_id' => $mainOrg->id,
+            'organization_id' => $defaultOrg->id,
         ]);
 
         // Redis server (from docker-compose)
@@ -96,7 +96,7 @@ class DatabaseSeeder extends Seeder
             'database_type' => 'redis',
             'username' => '',
             'password' => '',
-            'organization_id' => $mainOrg->id,
+            'organization_id' => $defaultOrg->id,
         ]);
 
         // MongoDB server (from docker-compose)
@@ -108,7 +108,7 @@ class DatabaseSeeder extends Seeder
             'username' => 'root',
             'password' => 'root',
             'extra_config' => ['auth_source' => 'admin'],
-            'organization_id' => $mainOrg->id,
+            'organization_id' => $defaultOrg->id,
         ]);
 
         // Backup configurations (database_selection_mode lives on Backup now)

@@ -25,7 +25,7 @@ class DatabaseServerSshConfigFactory extends Factory
             'password' => 'ssh_password',
             'private_key' => null,
             'key_passphrase' => null,
-            'organization_id' => fn () => Organization::first()?->id ?? Organization::factory()->main(),
+            'organization_id' => fn () => Organization::first()?->id ?? Organization::factory()->default(),
         ];
     }
 
