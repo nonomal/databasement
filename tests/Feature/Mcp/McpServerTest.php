@@ -1,14 +1,17 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Jobs\ProcessBackupJob;
 use App\Jobs\ProcessRestoreJob;
 use App\Mcp\Servers\DatabasementServer;
 use App\Mcp\Tools\GetJobStatusTool;
 use App\Mcp\Tools\ListDatabaseServersTool;
+use App\Mcp\Tools\ListOrganizationsTool;
 use App\Mcp\Tools\ListSnapshotsTool;
 use App\Mcp\Tools\TriggerBackupTool;
 use App\Mcp\Tools\TriggerRestoreTool;
 use App\Models\BackupJob;
+use App\Models\Organization;
 use App\Models\Restore;
 use App\Models\Snapshot;
 use App\Models\User;
@@ -94,7 +97,7 @@ test('trigger backup dispatches job', function () {
 });
 
 test('trigger backup rejects viewer users', function () {
-    $user = User::factory()->create(['role' => User::ROLE_VIEWER]);
+    $user = User::factory()->create(['role' => UserRole::Viewer]);
     $server = createDatabaseServer();
 
     $response = DatabasementServer::actingAs($user)->tool(TriggerBackupTool::class, [
@@ -140,7 +143,7 @@ test('trigger restore rejects type mismatch', function () {
 });
 
 test('trigger restore rejects viewer users', function () {
-    $user = User::factory()->create(['role' => User::ROLE_VIEWER]);
+    $user = User::factory()->create(['role' => UserRole::Viewer]);
     $server = createDatabaseServer(['database_type' => 'mysql']);
     $snapshot = Snapshot::factory()->forServer($server)->create();
 
@@ -192,6 +195,7 @@ test('list database servers shows unconfigured backup', function () {
         'database_type' => 'mysql',
         'username' => 'root',
         'password' => 'secret',
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     $response = DatabasementServer::actingAs($user)->tool(ListDatabaseServersTool::class);
@@ -254,6 +258,7 @@ test('trigger backup rejects server without backup config', function () {
         'password' => 'secret',
         'database_names' => ['testdb'],
         'database_selection_mode' => 'selected',
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     $response = DatabasementServer::actingAs($user)->tool(TriggerBackupTool::class, [
@@ -361,4 +366,31 @@ test('get job status shows error message for failed jobs', function () {
 
 test('web mcp route requires authentication', function () {
     $this->postJson('/mcp')->assertUnauthorized();
+});
+
+test('list organizations shows user orgs with active indicator', function () {
+    $user = User::factory()->create();
+    $otherOrg = Organization::factory()->create(['name' => 'Other Org']);
+    $user->organizations()->attach($otherOrg->id, ['role' => UserRole::Member]);
+
+    $response = DatabasementServer::actingAs($user)->tool(ListOrganizationsTool::class);
+
+    $response->assertOk()
+        ->assertSee('Your Organizations (2)')
+        ->assertSee('(active)')
+        ->assertSee('Other Org');
+});
+
+test('list database servers only returns servers from current org', function () {
+    $user = User::factory()->create();
+    $otherOrg = Organization::factory()->create(['name' => 'Other Org']);
+
+    createDatabaseServer(['name' => 'My Server']);
+    \App\Models\DatabaseServer::factory()->create(['name' => 'Other Server', 'organization_id' => $otherOrg->id]);
+
+    $response = DatabasementServer::actingAs($user)->tool(ListDatabaseServersTool::class);
+
+    $response->assertOk()
+        ->assertSee('My Server')
+        ->assertDontSee('Other Server');
 });

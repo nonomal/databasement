@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\BackupJobController;
 use App\Http\Controllers\Api\V1\BackupScheduleController;
 use App\Http\Controllers\Api\V1\DatabaseServerController;
 use App\Http\Controllers\Api\V1\SnapshotController;
+use App\Http\Controllers\Api\V1\UserOrganizationController;
 use App\Http\Controllers\Api\V1\VolumeController;
 use Illuminate\Support\Facades\Route;
 
@@ -39,6 +40,9 @@ Route::middleware(['auth:sanctum'])->name('api.')->prefix('v1')->group(function 
         ->only(['index', 'show', 'store', 'destroy']);
     Route::put('backup-schedules/{backup_schedule}', [BackupScheduleController::class, 'update'])
         ->name('backup-schedules.update');
+
+    Route::get('user/organizations', [UserOrganizationController::class, 'index'])
+        ->name('user.organizations');
 });
 
 // Agent API routes — authenticated via Sanctum with agent-specific token check
