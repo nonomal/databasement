@@ -3,16 +3,17 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Services\CurrentOrganization;
 
 class UserPolicy
 {
     /**
      * Determine whether the user can view any models.
-     * All authenticated users can view the user list.
+     * Only super admins and org admins can access the user list.
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->isAdmin();
     }
 
     /**
@@ -26,52 +27,119 @@ class UserPolicy
 
     /**
      * Determine whether the user can create models.
-     * Only admins can create users.
+     * Super admins and org admins can create new users.
      */
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        return app(CurrentOrganization::class)->isOrgAdmin();
     }
 
     /**
      * Determine whether the user can update the model.
-     * Only admins can update users.
+     * Super admins can update any user. Org admins can update users in their org.
      */
     public function update(User $user, User $model): bool
     {
-        return $user->isAdmin();
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        $currentOrg = app(CurrentOrganization::class);
+
+        return $currentOrg->isOrgAdmin()
+            && ! $model->isSuperAdmin()
+            && $model->belongsToOrganization($currentOrg->model());
     }
 
     /**
      * Determine whether the user can delete the model.
-     * Only admins can delete users, with restrictions.
+     * Super admins can always delete (except self/last SA).
+     * Org admins can delete users who belong to only one organization.
      */
     public function delete(User $user, User $model): bool
     {
-        // Cannot delete yourself
         if ($user->id === $model->id) {
             return false;
         }
 
-        // Only admins can delete
-        if (! $user->isAdmin()) {
+        if ($user->isSuperAdmin()) {
+            if ($model->isSuperAdmin() && User::where('super_admin', true)->count() === 1) {
+                return false;
+            }
+
+            return true;
+        }
+
+        $currentOrg = app(CurrentOrganization::class);
+
+        return $currentOrg->isOrgAdmin()
+            && ! $model->isSuperAdmin()
+            && $model->belongsToOrganization($currentOrg->model())
+            && $model->organizations()->count() === 1;
+    }
+
+    /**
+     * Determine whether the user can remove the model from the current organization.
+     * Only available when the target belongs to more than one organization.
+     */
+    public function removeFromOrganization(User $user, User $model): bool
+    {
+        if ($user->id === $model->id) {
             return false;
         }
 
-        // Cannot delete the last admin
-        if ($model->isAdmin() && User::where('role', User::ROLE_ADMIN)->count() === 1) {
+        if ($model->organizations()->count() <= 1) {
             return false;
         }
 
-        return true;
+        if (! $user->isSuperAdmin() && $model->isSuperAdmin()) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        return app(CurrentOrganization::class)->isOrgAdmin();
     }
 
     /**
      * Determine whether the user can copy the invitation link.
-     * Only admins can copy invitation links for pending users.
+     * Super admins and org admins can copy invitation links for pending users.
      */
     public function copyInvitationLink(User $user, User $model): bool
     {
-        return $user->isAdmin() && $model->invitation_token !== null;
+        if ($model->invitation_token === null) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        $currentOrg = app(CurrentOrganization::class);
+
+        return $currentOrg->isOrgAdmin()
+            && ! $model->isSuperAdmin()
+            && $model->belongsToOrganization($currentOrg->model());
+    }
+
+    /**
+     * Determine whether the user can attach/detach users in the current org.
+     * Super admins and org admins can manage org membership.
+     */
+    public function manageOrgMembership(User $user): bool
+    {
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        $currentOrg = app(CurrentOrganization::class);
+
+        return $currentOrg->isOrgAdmin();
     }
 }

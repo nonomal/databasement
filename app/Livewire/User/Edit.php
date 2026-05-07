@@ -29,7 +29,7 @@ class Edit extends Component
         $this->authorize('update', $this->form->user);
 
         if (! $this->form->update()) {
-            $this->error(__('Cannot change role. At least one administrator is required.'));
+            $this->error(__('Cannot change role. At least one super administrator is required.'));
 
             return;
         }
@@ -44,6 +44,8 @@ class Edit extends Component
     {
         return view('livewire.user.edit', [
             'roleOptions' => $this->form->roleOptions(),
+            'isSuperAdmin' => auth()->user()->isSuperAdmin(),
+            'isOAuthUser' => $this->form->user->isOAuth(),
         ]);
     }
 }

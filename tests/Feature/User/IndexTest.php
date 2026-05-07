@@ -1,17 +1,43 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Livewire\User\Index;
+use App\Models\Organization;
 use App\Models\User;
 use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
-use function Pest\Laravel\get;
 
 beforeEach(function () {
-    $this->admin = User::factory()->create(['role' => 'admin']);
+    $this->admin = User::factory()->superAdmin()->create();
 });
 
-test('displays users in table', function () {
+describe('access control', function () {
+    test('super admin can access user index', function () {
+        actingAs($this->admin);
+
+        Livewire::test(Index::class)
+            ->assertOk();
+    });
+
+    test('org admin can access user index', function () {
+        $orgAdmin = User::factory()->admin()->create();
+        actingAs($orgAdmin);
+
+        Livewire::test(Index::class)
+            ->assertOk();
+    });
+
+    test('non-admin cannot access user index', function (string $role) {
+        $user = User::factory()->create(['role' => $role]);
+        actingAs($user);
+
+        Livewire::test(Index::class)
+            ->assertForbidden();
+    })->with(['member', 'viewer']);
+});
+
+test('displays users in current organization', function () {
     actingAs($this->admin);
 
     User::factory()->create(['name' => 'John Doe']);
@@ -34,88 +60,128 @@ test('can search users by name', function () {
         ->assertDontSee('Jane Smith');
 });
 
-test('admin can delete another user', function () {
-    actingAs($this->admin);
+describe('delete', function () {
+    test('delete authorization', function (string $actorType, bool $targetSuperAdmin, int $targetOrgCount, bool $allowed) {
+        $actor = $actorType === 'super_admin'
+            ? $this->admin
+            : User::factory()->admin()->create();
 
-    $userToDelete = User::factory()->create(['name' => 'Delete Me']);
+        $target = $targetSuperAdmin
+            ? User::factory()->superAdmin()->create()
+            : User::factory()->create();
 
-    Livewire::test(Index::class)
-        ->call('confirmDelete', $userToDelete->id)
-        ->assertSet('showDeleteModal', true)
-        ->call('delete')
-        ->assertSet('showDeleteModal', false);
+        if ($targetOrgCount > 1) {
+            $secondOrg = Organization::factory()->create();
+            $target->organizations()->attach($secondOrg->id, ['role' => UserRole::Member]);
+        }
 
-    expect(User::find($userToDelete->id))->toBeNull();
-});
+        actingAs($actor);
 
-test('admin cannot delete themselves', function () {
-    actingAs($this->admin);
+        $component = Livewire::test(Index::class)
+            ->call('confirmDelete', $target->id);
 
-    Livewire::test(Index::class)
-        ->call('confirmDelete', $this->admin->id)
-        ->assertForbidden();
-});
-
-test('admin cannot delete the last admin', function () {
-    actingAs($this->admin);
-
-    // Ensure this is the only admin
-    expect(User::where('role', 'admin')->count())->toBe(1);
-
-    // Create another admin to delete, then delete them to get back to 1 admin
-    $anotherAdmin = User::factory()->create(['role' => 'admin', 'name' => 'Another Admin']);
-
-    // Delete the other admin (should work)
-    Livewire::test(Index::class)
-        ->call('confirmDelete', $anotherAdmin->id)
-        ->call('delete');
-
-    expect(User::find($anotherAdmin->id))->toBeNull();
-
-    // Now try to delete the last admin - should fail on authorize
-    // We need to create another user to try from (but they need to be admin)
-    // Actually, the test should verify you can't delete when count = 1
-});
-
-test('admin can copy invitation link for pending user', function () {
-    actingAs($this->admin);
-
-    $pendingUser = User::factory()->create([
-        'name' => 'Pending User',
-        'invitation_token' => 'test-token-123',
-        'invitation_accepted_at' => null,
+        if ($allowed) {
+            $component->assertSet('showDeleteModal', true)
+                ->call('delete')
+                ->assertSet('showDeleteModal', false);
+            expect(User::find($target->id))->toBeNull();
+        } else {
+            $component->assertForbidden();
+        }
+    })->with([
+        'super admin deletes regular user (1 org)' => ['super_admin', false, 1, true],
+        'super admin deletes regular user (2 orgs)' => ['super_admin', false, 2, true],
+        'super admin deletes super admin (not last)' => ['super_admin', true, 1, true],
+        'org admin deletes regular user (1 org)' => ['admin', false, 1, true],
+        'org admin cannot delete user in multiple orgs' => ['admin', false, 2, false],
+        'org admin cannot delete super admin' => ['admin', true, 1, false],
     ]);
 
-    Livewire::test(Index::class)
-        ->call('copyInvitationLink', $pendingUser->id)
-        ->assertSet('showCopyModal', true)
-        ->assertSet('invitationUrl', route('invitation.accept', 'test-token-123'));
+    test('cannot delete yourself', function () {
+        actingAs($this->admin);
+
+        Livewire::test(Index::class)
+            ->call('confirmDelete', $this->admin->id)
+            ->assertForbidden();
+    });
 });
 
-test('non-admin cannot delete users', function () {
-    $member = User::factory()->create(['role' => 'member']);
-    actingAs($member);
+describe('remove from organization', function () {
+    test('remove from org authorization', function (string $actorType, bool $targetSuperAdmin, int $targetOrgCount, bool $allowed) {
+        $actor = $actorType === 'super_admin'
+            ? $this->admin
+            : User::factory()->admin()->create();
 
-    $userToDelete = User::factory()->create();
+        $target = $targetSuperAdmin
+            ? User::factory()->superAdmin()->create()
+            : User::factory()->create();
 
-    Livewire::test(Index::class)
-        ->call('confirmDelete', $userToDelete->id)
-        ->assertForbidden();
+        if ($targetOrgCount > 1) {
+            $secondOrg = Organization::factory()->create();
+            $target->organizations()->attach($secondOrg->id, ['role' => UserRole::Member]);
+        }
+
+        actingAs($actor);
+
+        $component = Livewire::test(Index::class)
+            ->call('confirmRemoveFromOrg', $target->id);
+
+        if ($allowed) {
+            $component->assertSet('showRemoveModal', true)
+                ->call('removeFromOrg')
+                ->assertSet('showRemoveModal', false);
+
+            // User still exists but is no longer in the current org
+            expect(User::find($target->id))->not->toBeNull();
+            $currentOrgId = app(\App\Services\CurrentOrganization::class)->id();
+            expect($target->fresh()->organizations()->where('organization_id', $currentOrgId)->exists())->toBeFalse();
+        } else {
+            $component->assertForbidden();
+        }
+    })->with([
+        'super admin removes user (2 orgs)' => ['super_admin', false, 2, true],
+        'org admin removes user (2 orgs)' => ['admin', false, 2, true],
+        'cannot remove user in single org (super admin)' => ['super_admin', false, 1, false],
+        'cannot remove user in single org (org admin)' => ['admin', false, 1, false],
+        'org admin cannot remove super admin' => ['admin', true, 2, false],
+    ]);
+
+    test('cannot remove yourself from org', function () {
+        actingAs($this->admin);
+
+        Livewire::test(Index::class)
+            ->call('confirmRemoveFromOrg', $this->admin->id)
+            ->assertForbidden();
+    });
 });
 
-test('viewer can access user index but cannot perform actions', function () {
-    $viewer = User::factory()->create(['role' => 'viewer']);
-    actingAs($viewer);
+describe('invitation link', function () {
+    test('super admin can copy invitation link for pending user', function () {
+        actingAs($this->admin);
 
-    $someUser = User::factory()->create();
+        $pendingUser = User::factory()->create([
+            'invitation_token' => 'test-token-123',
+            'invitation_accepted_at' => null,
+        ]);
 
-    // Can view index
-    Livewire::test(Index::class)
-        ->assertOk()
-        ->assertSee($someUser->name);
+        Livewire::test(Index::class)
+            ->call('copyInvitationLink', $pendingUser->id)
+            ->assertSet('showCopyModal', true)
+            ->assertSet('invitationUrl', route('invitation.accept', 'test-token-123'));
+    });
 
-    // Cannot delete
-    Livewire::test(Index::class)
-        ->call('confirmDelete', $someUser->id)
-        ->assertForbidden();
+    test('org admin can copy invitation link for pending user in their org', function () {
+        $orgAdmin = User::factory()->admin()->create();
+        actingAs($orgAdmin);
+
+        $pendingUser = User::factory()->create([
+            'invitation_token' => 'test-token-456',
+            'invitation_accepted_at' => null,
+        ]);
+
+        Livewire::test(Index::class)
+            ->call('copyInvitationLink', $pendingUser->id)
+            ->assertSet('showCopyModal', true)
+            ->assertSet('invitationUrl', route('invitation.accept', 'test-token-456'));
+    });
 });

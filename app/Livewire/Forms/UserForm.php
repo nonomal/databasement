@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Forms;
 
+use App\Enums\UserRole;
 use App\Models\User;
+use App\Services\CurrentOrganization;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -16,15 +18,22 @@ class UserForm extends Form
     #[Validate('required|string|email|max:255')]
     public string $email = '';
 
+    /** Per-org role (for the current org context) */
     #[Validate('required|in:viewer,member,admin')]
-    public string $role = User::ROLE_MEMBER;
+    public string $role = UserRole::Member->value;
+
+    /** Super admin flag (only super admins can set this) */
+    public bool $superAdmin = false;
 
     public function setUser(User $user): void
     {
         $this->user = $user;
         $this->name = $user->name;
         $this->email = $user->email;
-        $this->role = $user->role;
+        $this->superAdmin = $user->super_admin;
+
+        $currentOrg = app(CurrentOrganization::class);
+        $this->role = ($user->roleIn($currentOrg->model()) ?? UserRole::Member)->value;
     }
 
     public function store(): User
@@ -32,15 +41,18 @@ class UserForm extends Form
         $this->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
-            'role' => 'required|in:viewer,member,admin',
+            'role' => 'required|'.UserRole::validationRule(),
         ]);
 
         $user = User::create([
             'name' => $this->name,
             'email' => $this->email,
-            'role' => $this->role,
             'password' => null,
+            'super_admin' => auth()->user()->isSuperAdmin() ? $this->superAdmin : false,
         ]);
+
+        $currentOrg = app(CurrentOrganization::class);
+        $user->organizations()->attach($currentOrg->id(), ['role' => $this->role]);
 
         $user->generateInvitationToken();
 
@@ -49,25 +61,34 @@ class UserForm extends Form
 
     public function update(): bool
     {
+        $isOAuthUser = $this->user->isOAuth();
+
         $this->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,'.$this->user->id,
-            'role' => 'required|in:viewer,member,admin',
+            'email' => $isOAuthUser ? '' : 'required|string|email|max:255|unique:users,email,'.$this->user->id,
+            'role' => 'required|'.UserRole::validationRule(),
         ]);
 
-        // Check if trying to change role from admin and this is the last admin
-        if ($this->user->isAdmin() && $this->role !== User::ROLE_ADMIN) {
-            $adminCount = User::where('role', User::ROLE_ADMIN)->count();
-            if ($adminCount === 1) {
-                return false;
+        $data = $isOAuthUser
+            ? ['name' => $this->name]
+            : ['name' => $this->name, 'email' => $this->email];
+
+        // Super admin flag — only super admins can change it
+        if (auth()->user()->isSuperAdmin()) {
+            // Cannot remove the last super admin
+            if ($this->user->isSuperAdmin() && ! $this->superAdmin) {
+                if (User::where('super_admin', true)->count() === 1) {
+                    return false;
+                }
             }
+
+            $this->user->update([...$data, 'super_admin' => $this->superAdmin]);
+        } else {
+            $this->user->update($data);
         }
 
-        $this->user->update([
-            'name' => $this->name,
-            'email' => $this->email,
-            'role' => $this->role,
-        ]);
+        $currentOrg = app(CurrentOrganization::class);
+        $this->user->organizations()->updateExistingPivot($currentOrg->id(), ['role' => $this->role]);
 
         return true;
     }
@@ -77,10 +98,16 @@ class UserForm extends Form
      */
     public function roleOptions(): array
     {
-        return [
-            ['id' => User::ROLE_VIEWER, 'name' => __('Viewer'), 'description' => __('Read-only access to all resources'), 'icon' => User::roleIcon(User::ROLE_VIEWER)],
-            ['id' => User::ROLE_MEMBER, 'name' => __('Member'), 'description' => __('Full access except user management'), 'icon' => User::roleIcon(User::ROLE_MEMBER)],
-            ['id' => User::ROLE_ADMIN, 'name' => __('Admin'), 'description' => __('Full access including user management'), 'icon' => User::roleIcon(User::ROLE_ADMIN)],
-        ];
+        return array_map(fn (UserRole $role) => [
+            'id' => $role->value,
+            'name' => $role->label(),
+            'description' => match ($role) {
+                UserRole::Viewer => __('Read-only access to all resources'),
+                UserRole::Member => __('Full access except user management'),
+                UserRole::Admin => __('Full access including user management'),
+                default => '',
+            },
+            'icon' => $role->icon(),
+        ], UserRole::assignable());
     }
 }

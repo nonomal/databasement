@@ -22,15 +22,21 @@
                 type="email"
                 placeholder="{{ __('email@example.com') }}"
                 icon="o-envelope"
+                :disabled="$isOAuthUser"
+                :hint="$isOAuthUser ? __('Email cannot be changed for SSO/OAuth users.') : null"
                 required
             />
 
-            @php
-                $isOnlyAdmin = $form->user->isAdmin() && \App\Models\User::where('role', 'admin')->count() === 1;
-            @endphp
+            @if($isSuperAdmin)
+                <x-checkbox
+                    wire:model="form.superAdmin"
+                    :label="__('Super Admin')"
+                    :hint="__('Super admins can access all organizations and manage global settings.')"
+                />
+            @endif
 
             <div>
-                <label class="label label-text font-semibold mb-2">{{ __('Role') }}</label>
+                <label class="label label-text font-semibold mb-2">{{ __('Role in current organization') }}</label>
                 <x-radio-card-group class="grid-cols-1 sm:grid-cols-3" :label="__('Role')">
                     @foreach($roleOptions as $option)
                         <x-radio-card
@@ -39,19 +45,12 @@
                             :label="$option['name']"
                             :hint="$option['description']"
                             :value="$option['id']"
-                            :disabled="$isOnlyAdmin && $option['id'] !== \App\Models\User::ROLE_ADMIN"
                             horizontal
                             wire:model.live="form.role"
                         />
                     @endforeach
                 </x-radio-card-group>
             </div>
-
-            @if($isOnlyAdmin)
-                <x-alert class="alert-warning" icon="o-exclamation-triangle">
-                    {{ __('This is the only administrator. The role cannot be changed.') }}
-                </x-alert>
-            @endif
 
             <div class="bg-base-200 p-4 rounded-lg">
                 <h4 class="font-medium mb-2">{{ __('User Status') }}</h4>

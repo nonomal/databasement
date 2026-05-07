@@ -35,7 +35,7 @@
                     @if($user->id === auth()->id())
                         <span class="text-xs text-base-content/50">{{ __('(You)') }}</span>
                     @endif
-                    @if($user->isOAuthOnly())
+                    @if($user->isOAuth())
                         <x-badge value="OAuth" class="badge-ghost badge-sm" />
                     @endif
                 </div>
@@ -47,14 +47,18 @@
 
             @scope('cell_role', $user)
                 @php
-                    $roleClass = match($user->role) {
-                        'admin' => 'badge-primary',
-                        'member' => 'badge-info',
-                        'viewer' => 'badge-neutral',
-                        default => 'badge-ghost',
-                    };
+                    $currentOrg = app(\App\Services\CurrentOrganization::class);
+                    $orgRole = $user->roleIn($currentOrg->model());
+                    $displayRole = $orgRole ?? \App\Enums\UserRole::Member;
                 @endphp
-                <x-badge :value="ucfirst($user->role)" :icon="\App\Models\User::roleIcon($user->role)" class="{{ $roleClass }}" />
+                <div class="flex flex-wrap items-center gap-1">
+                    @if($user->isSuperAdmin())
+                        <x-badge value="Super Admin" icon="o-star" class="badge-warning whitespace-nowrap" />
+                    @endif
+                    @if($orgRole)
+                        <x-badge :value="$displayRole->label()" :icon="$displayRole->icon()" class="{{ $displayRole->badgeClass() }}" />
+                    @endif
+                </div>
             @endscope
 
             @scope('cell_status', $user)
@@ -89,6 +93,14 @@
                             class="btn-ghost btn-sm"
                         />
                     @endcan
+                    @can('removeFromOrganization', $user)
+                        <x-button
+                            icon="o-user-minus"
+                            wire:click="confirmRemoveFromOrg({{ $user->id }})"
+                            tooltip="{{ __('Remove from organization') }}"
+                            class="btn-ghost btn-sm text-warning"
+                        />
+                    @endcan
                     @can('delete', $user)
                         <x-button
                             icon="o-trash"
@@ -107,7 +119,21 @@
         :title="__('Delete User')"
         :message="__('Are you sure you want to delete this user? This action cannot be undone.')"
         onConfirm="delete"
-    />
+    >
+        <x-alert icon="o-information-circle" class="alert-info mt-4">
+            {!! __('Database servers, backups, snapshots, and other resources created by this user <strong>WILL NOT</strong> be deleted and will remain accessible.') !!}
+        </x-alert>
+    </x-delete-confirmation-modal>
+
+    <!-- REMOVE FROM ORG CONFIRMATION MODAL -->
+    <x-modal wire:model="showRemoveModal" :title="__('Remove User from Organization')" class="backdrop-blur">
+        <p>{{ __('Are you sure you want to remove this user from the current organization? The user will retain access to other organizations they belong to.') }}</p>
+
+        <x-slot:actions>
+            <x-button :label="__('Cancel')" @click="$wire.showRemoveModal = false" />
+            <x-button :label="__('Remove')" class="btn-warning" wire:click="removeFromOrg" spinner="removeFromOrg" />
+        </x-slot:actions>
+    </x-modal>
 
     <!-- COPY INVITATION LINK MODAL -->
     <x-invitation-link-modal
