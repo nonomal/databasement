@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Settings\TwoFactor;
+use App\Models\OAuthIdentity;
 use App\Models\User;
 use Laravel\Fortify\Features;
 use Livewire\Livewire;
@@ -27,9 +28,13 @@ test('two factor settings page can be rendered', function () {
         ->assertSee('Disabled');
 });
 
-test('oauth only users are redirected to password confirmation which blocks them', function () {
-    $user = User::factory()->create([
-        'password' => null, // OAuth users have no password
+test('oauth user is blocked from two factor settings', function () {
+    $user = User::factory()->create(['password' => null]);
+    OAuthIdentity::create([
+        'user_id' => $user->id,
+        'provider' => 'github',
+        'provider_user_id' => 'gh-123',
+        'email' => $user->email,
     ]);
 
     // First, they get redirected to password confirmation

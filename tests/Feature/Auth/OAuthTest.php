@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Models\OAuthIdentity;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -78,7 +79,7 @@ test('oauth callback creates new user when email not found', function () {
     $user = User::where('email', 'newuser@example.com')->first();
     expect($user)->not->toBeNull()
         ->and($user->name)->toBe('New User')
-        ->and($user->role)->toBe(User::ROLE_MEMBER)
+        ->and($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Member)
         ->and($user->password)->toBeNull()
         ->and($user->email_verified_at)->not->toBeNull()
         ->and($user->invitation_accepted_at)->not->toBeNull();
@@ -94,7 +95,7 @@ test('oauth callback creates new user when email not found', function () {
 test('oauth callback links to existing user by email and clears password', function () {
     $existingUser = User::factory()->create([
         'email' => 'existing@example.com',
-        'role' => User::ROLE_ADMIN,
+        'role' => UserRole::Admin,
         'password' => 'original-password',
     ]);
 
@@ -116,7 +117,7 @@ test('oauth callback links to existing user by email and clears password', funct
 
     $existingUser->refresh();
     expect($existingUser->oauthIdentities)->toHaveCount(1)
-        ->and($existingUser->role)->toBe(User::ROLE_ADMIN) // unchanged
+        ->and($existingUser->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Admin) // unchanged
         ->and($existingUser->password)->toBeNull(); // cleared to enforce OAuth-only login
 });
 
@@ -158,7 +159,7 @@ test('oauth uses configured default role for new users', function () {
     $this->get(route('oauth.callback', 'github'));
 
     $user = User::where('email', 'viewer@example.com')->first();
-    expect($user->role)->toBe(User::ROLE_VIEWER);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Viewer);
 });
 
 test('oauth callback fails when auto-create is disabled and no matching user', function () {
@@ -268,7 +269,7 @@ test('oidc role mapping assigns admin role from matching group', function () {
     $this->get(route('oauth.callback', 'oidc'));
 
     $user = User::where('email', 'admin@example.com')->first();
-    expect($user->role)->toBe(User::ROLE_ADMIN);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Admin);
 });
 
 test('oidc role mapping assigns member role from matching group', function () {
@@ -280,7 +281,7 @@ test('oidc role mapping assigns member role from matching group', function () {
     $this->get(route('oauth.callback', 'oidc'));
 
     $user = User::where('email', 'member@example.com')->first();
-    expect($user->role)->toBe(User::ROLE_MEMBER);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Member);
 });
 
 test('oidc role mapping assigns viewer role from matching group', function () {
@@ -292,7 +293,7 @@ test('oidc role mapping assigns viewer role from matching group', function () {
     $this->get(route('oauth.callback', 'oidc'));
 
     $user = User::where('email', 'viewer@example.com')->first();
-    expect($user->role)->toBe(User::ROLE_VIEWER);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Viewer);
 });
 
 test('oidc role mapping uses highest priority role when multiple groups match', function () {
@@ -305,7 +306,7 @@ test('oidc role mapping uses highest priority role when multiple groups match', 
     $this->get(route('oauth.callback', 'oidc'));
 
     $user = User::where('email', 'multi@example.com')->first();
-    expect($user->role)->toBe(User::ROLE_ADMIN);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Admin);
 });
 
 test('oidc role mapping falls back to default role when no group matches and strict is off', function () {
@@ -318,7 +319,7 @@ test('oidc role mapping falls back to default role when no group matches and str
     $this->get(route('oauth.callback', 'oidc'));
 
     $user = User::where('email', 'fallback@example.com')->first();
-    expect($user->role)->toBe(User::ROLE_VIEWER);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Viewer);
 });
 
 test('oidc role mapping denies access when no group matches and strict is on', function () {
@@ -339,7 +340,7 @@ test('oidc role mapping syncs role for returning user', function () {
     enableOidcProvider();
     Config::set('oauth.role_mapping.admin', 'databasement-admins');
 
-    $user = User::factory()->create(['role' => User::ROLE_MEMBER]);
+    $user = User::factory()->create(['role' => UserRole::Member]);
     OAuthIdentity::create([
         'user_id' => $user->id,
         'provider' => 'oidc',
@@ -352,7 +353,7 @@ test('oidc role mapping syncs role for returning user', function () {
     $this->get(route('oauth.callback', 'oidc'));
 
     $user->refresh();
-    expect($user->role)->toBe(User::ROLE_ADMIN);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Admin);
 });
 
 test('oidc role mapping updates role when groups change for returning user', function () {
@@ -360,7 +361,7 @@ test('oidc role mapping updates role when groups change for returning user', fun
     Config::set('oauth.role_mapping.admin', 'databasement-admins');
     Config::set('oauth.role_mapping.viewer', 'databasement-viewers');
 
-    $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+    $user = User::factory()->create(['role' => UserRole::Admin]);
     OAuthIdentity::create([
         'user_id' => $user->id,
         'provider' => 'oidc',
@@ -374,7 +375,7 @@ test('oidc role mapping updates role when groups change for returning user', fun
     $this->get(route('oauth.callback', 'oidc'));
 
     $user->refresh();
-    expect($user->role)->toBe(User::ROLE_VIEWER);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Viewer);
 });
 
 test('oidc role mapping uses default role when no mapping is configured', function () {
@@ -387,7 +388,7 @@ test('oidc role mapping uses default role when no mapping is configured', functi
     $this->get(route('oauth.callback', 'oidc'));
 
     $user = User::where('email', 'default@example.com')->first();
-    expect($user->role)->toBe(User::ROLE_VIEWER);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Viewer);
 });
 
 test('oidc role mapping falls back to default role when groups claim is missing', function () {
@@ -400,7 +401,7 @@ test('oidc role mapping falls back to default role when groups claim is missing'
     $this->get(route('oauth.callback', 'oidc'));
 
     $user = User::where('email', 'noclaimuser@example.com')->first();
-    expect($user->role)->toBe(User::ROLE_VIEWER);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Viewer);
 });
 
 test('oidc role mapping strict mode denies access when groups claim is missing', function () {
@@ -435,7 +436,7 @@ test('oidc role mapping reads from custom claim name', function () {
     $this->get(route('oauth.callback', 'oidc'));
 
     $user = User::where('email', 'custom@example.com')->first();
-    expect($user->role)->toBe(User::ROLE_ADMIN);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Admin);
 });
 
 test('oidc role mapping does not apply to non-oidc providers', function () {
@@ -455,7 +456,7 @@ test('oidc role mapping does not apply to non-oidc providers', function () {
     $this->get(route('oauth.callback', 'github'));
 
     $user = User::where('email', 'ghuser@example.com')->first();
-    expect($user->role)->toBe(User::ROLE_MEMBER);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Member);
 });
 
 test('oidc role mapping supports comma-separated groups in env var', function () {
@@ -467,7 +468,7 @@ test('oidc role mapping supports comma-separated groups in env var', function ()
     $this->get(route('oauth.callback', 'oidc'));
 
     $user = User::where('email', 'comma@example.com')->first();
-    expect($user->role)->toBe(User::ROLE_ADMIN);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Admin);
 });
 
 test('oidc role mapping matches groups case-insensitively', function () {
@@ -479,7 +480,58 @@ test('oidc role mapping matches groups case-insensitively', function () {
     $this->get(route('oauth.callback', 'oidc'));
 
     $user = User::where('email', 'case@example.com')->first();
-    expect($user->role)->toBe(User::ROLE_ADMIN);
+    expect($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Admin);
+});
+
+test('new oauth user joins configured default organization', function () {
+    enableOidcProvider();
+    $customOrg = \App\Models\Organization::factory()->create(['name' => 'Custom Org']);
+    Config::set('oauth.default_organization_id', $customOrg->id);
+
+    Socialite::fake('oidc', fakeOidcUser('oidc-org-1', 'orguser@example.com', 'Org User'));
+
+    $this->get(route('oauth.callback', 'oidc'));
+
+    $user = User::where('email', 'orguser@example.com')->first();
+    expect($user)->not->toBeNull()
+        ->and($user->belongsToOrganization($customOrg))->toBeTrue()
+        ->and($user->roleIn($customOrg))->toBe(UserRole::Member);
+});
+
+test('new oauth user falls back to main org when configured org does not exist', function () {
+    enableOidcProvider();
+    Config::set('oauth.default_organization_id', 'nonexistent-ulid');
+
+    Socialite::fake('oidc', fakeOidcUser('oidc-org-2', 'fallbackorg@example.com', 'Fallback Org'));
+
+    $this->get(route('oauth.callback', 'oidc'));
+
+    $user = User::where('email', 'fallbackorg@example.com')->first();
+    expect($user)->not->toBeNull()
+        ->and($user->belongsToOrganization(\App\Models\Organization::main()))->toBeTrue();
+});
+
+test('oidc role mapping syncs role in configured default organization', function () {
+    enableOidcProvider();
+    $customOrg = \App\Models\Organization::factory()->create(['name' => 'Custom Org']);
+    Config::set('oauth.default_organization_id', $customOrg->id);
+    Config::set('oauth.role_mapping.admin', 'databasement-admins');
+
+    $user = User::factory()->create(['role' => UserRole::Member]);
+    $user->organizations()->attach($customOrg->id, ['role' => UserRole::Member]);
+    OAuthIdentity::create([
+        'user_id' => $user->id,
+        'provider' => 'oidc',
+        'provider_user_id' => 'oidc-org-3',
+        'email' => $user->email,
+    ]);
+
+    Socialite::fake('oidc', fakeOidcUser('oidc-org-3', $user->email, $user->name, ['databasement-admins']));
+
+    $this->get(route('oauth.callback', 'oidc'));
+
+    $user->refresh();
+    expect($user->roleIn($customOrg))->toBe(UserRole::Admin);
 });
 
 test('oidc role mapping strict mode denies returning user with revoked groups', function () {
@@ -487,7 +539,7 @@ test('oidc role mapping strict mode denies returning user with revoked groups', 
     Config::set('oauth.role_mapping.admin', 'databasement-admins');
     Config::set('oauth.role_mapping.strict', true);
 
-    $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+    $user = User::factory()->create(['role' => UserRole::Admin]);
     OAuthIdentity::create([
         'user_id' => $user->id,
         'provider' => 'oidc',

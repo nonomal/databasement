@@ -28,18 +28,24 @@ class Profile extends Component
     public function updateProfileInformation(): void
     {
         $user = Auth::user();
+        $isOAuth = $user->isOAuth();
 
-        $validated = $this->validate([
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'email' => [
+        ];
+
+        if (! $isOAuth) {
+            $rules['email'] = [
                 'required',
                 'string',
                 'lowercase',
                 'email',
                 'max:255',
                 Rule::unique(User::class)->ignore($user->id),
-            ],
-        ]);
+            ];
+        }
+
+        $validated = $this->validate($rules);
 
         $user->fill($validated);
 
@@ -50,6 +56,8 @@ class Profile extends Component
 
     public function render(): View
     {
-        return view('livewire.settings.profile');
+        return view('livewire.settings.profile', [
+            'isOAuthUser' => Auth::user()->isOAuth(),
+        ]);
     }
 }

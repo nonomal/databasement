@@ -1,13 +1,18 @@
 <?php
 
 use App\Livewire\Settings\Password;
+use App\Models\OAuthIdentity;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 
-test('oauth only users cannot access password settings', function () {
-    $user = User::factory()->create([
-        'password' => null, // OAuth users have no password
+test('oauth user cannot access password settings', function () {
+    $user = User::factory()->create(['password' => null]);
+    OAuthIdentity::create([
+        'user_id' => $user->id,
+        'provider' => 'github',
+        'provider_user_id' => 'gh-123',
+        'email' => $user->email,
     ]);
 
     $this->actingAs($user)

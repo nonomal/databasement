@@ -14,6 +14,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default Organization ID
+    |--------------------------------------------------------------------------
+    |
+    | When set, auto-created OAuth/OIDC users will join this organization
+    | instead of the main organization. Must be a valid organization ULID.
+    |
+    */
+    'default_organization_id' => env('OAUTH_DEFAULT_ORGANIZATION_ID'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Auto-link by Email
     |--------------------------------------------------------------------------
     |

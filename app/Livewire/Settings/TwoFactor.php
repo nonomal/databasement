@@ -44,7 +44,7 @@ class TwoFactor extends Component
         abort_unless(Features::enabled(Features::twoFactorAuthentication()), Response::HTTP_FORBIDDEN);
 
         // OAuth-only users don't have a password to use 2FA
-        if (Auth::user()->isOAuthOnly()) {
+        if (Auth::user()->isOAuth()) {
             abort(403, __('Two-factor settings are not available for OAuth users.'));
         }
 

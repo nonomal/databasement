@@ -3,35 +3,35 @@
 namespace App\Livewire\Settings;
 
 use App\Livewire\Actions\Logout;
-use App\Traits\Toast;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 class DeleteUserForm extends Component
 {
-    use Toast;
-
-    #[Validate('required|string|current_password')]
     public string $password = '';
 
     public bool $showDeleteModal = false;
 
     public function deleteUser(Logout $logout): void
     {
-        $this->validate();
+        if (! Auth::user()->isOAuth()) {
+            $this->validate([
+                'password' => ['required', 'string', 'current_password'],
+            ]);
+        }
 
         tap(Auth::user(), $logout(...))->delete();
 
-        $this->success(
-            title: __('Your account has been deleted.'),
-            redirectTo: '/'
-        );
+        session()->flash('status', __('Your account has been deleted.'));
+
+        $this->redirect(route('login'), navigate: false);
     }
 
     public function render(): View
     {
-        return view('livewire.settings.delete-user-form');
+        return view('livewire.settings.delete-user-form', [
+            'isOAuthUser' => Auth::user()->isOAuth(),
+        ]);
     }
 }

@@ -46,12 +46,8 @@ test('users can not authenticate with invalid password', function () {
     $this->assertGuest();
 });
 
-test('oauth only users see helpful error when trying to login with password', function () {
-    $user = User::factory()->create([
-        'password' => null, // OAuth-only user
-    ]);
-
-    // Create an OAuth identity for this user
+test('oauth users see helpful error when trying to login with password', function () {
+    $user = User::factory()->create(['password' => null]);
     OAuthIdentity::create([
         'user_id' => $user->id,
         'provider' => 'github',
@@ -142,6 +138,16 @@ test('login screen renders oauth provider button when enabled', function (string
     'gitlab' => ['gitlab', 'GitLab'],
     'oidc' => ['oidc', 'SSO'],
 ]);
+
+test('user without organization is logged out with error', function () {
+    $user = User::factory()->create();
+    $user->organizations()->detach();
+
+    $response = $this->actingAs($user)->get(route('dashboard'));
+
+    $response->assertRedirect(route('login'));
+    $this->assertGuest();
+});
 
 test('users can logout', function () {
     $user = User::factory()->create();

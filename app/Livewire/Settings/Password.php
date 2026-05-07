@@ -24,7 +24,7 @@ class Password extends Component
     public function mount(): void
     {
         // OAuth-only users don't have a password to change
-        if (Auth::user()->isOAuthOnly()) {
+        if (Auth::user()->isOAuth()) {
             abort(403, __('Password settings are not available for OAuth users.'));
         }
     }

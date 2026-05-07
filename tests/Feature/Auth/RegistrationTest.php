@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Models\DatabaseServer;
 use App\Models\User;
 use App\Services\DemoBackupService;
@@ -24,8 +25,10 @@ test('first user can register as admin', function () {
 
     $this->assertAuthenticated();
 
-    // First user should be admin
-    expect(auth()->user()->role)->toBe(User::ROLE_ADMIN);
+    // First user should be super admin
+    $user = auth()->user();
+    expect($user->super_admin)->toBeTrue()
+        ->and($user->roleIn(\App\Models\Organization::main()))->toBe(UserRole::Admin);
 });
 
 test('first user can create demo backup during registration', function () {
@@ -82,14 +85,14 @@ test('registration POST returns 403 when users exist', function () {
 // Invitation flow (allowed for non-first users)
 test('users can join via invitation link even when registration is closed', function () {
     // Create first admin
-    User::factory()->create(['role' => User::ROLE_ADMIN]);
+    User::factory()->create(['role' => UserRole::Admin]);
 
     // Create invited user (pending invitation)
     $invitedUser = User::factory()->create([
         'password' => null,
         'invitation_token' => 'test-token-123',
         'invitation_accepted_at' => null,
-        'role' => User::ROLE_MEMBER,
+        'role' => UserRole::Member,
     ]);
 
     // Accept invitation page should be accessible even though registration is closed
