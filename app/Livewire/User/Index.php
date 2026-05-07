@@ -36,10 +36,14 @@ class Index extends Component
 
     public bool $showDeleteModal = false;
 
+    public string $deleteBlockReason = '';
+
     #[Locked]
     public ?int $removeId = null;
 
     public bool $showRemoveModal = false;
+
+    public string $removeBlockReason = '';
 
     public bool $showCopyModal = false;
 
@@ -125,6 +129,7 @@ class Index extends Component
         $this->authorize('delete', $user);
 
         $this->deleteId = $id;
+        $this->deleteBlockReason = $this->getDeleteBlockReason($user);
         $this->showDeleteModal = true;
     }
 
@@ -137,6 +142,10 @@ class Index extends Component
         $user = User::findOrFail($this->deleteId);
 
         $this->authorize('delete', $user);
+
+        if ($this->getDeleteBlockReason($user) !== '') {
+            return;
+        }
 
         $user->delete();
         $this->deleteId = null;
@@ -152,6 +161,7 @@ class Index extends Component
         $this->authorize('removeFromOrganization', $user);
 
         $this->removeId = $id;
+        $this->removeBlockReason = $this->getRemoveBlockReason($user);
         $this->showRemoveModal = true;
     }
 
@@ -165,6 +175,10 @@ class Index extends Component
 
         $this->authorize('removeFromOrganization', $user);
 
+        if ($this->getRemoveBlockReason($user) !== '') {
+            return;
+        }
+
         $currentOrg = app(CurrentOrganization::class);
         $user->organizations()->detach($currentOrg->id());
 
@@ -172,6 +186,28 @@ class Index extends Component
         $this->showRemoveModal = false;
 
         $this->success(__('User removed from organization.'));
+    }
+
+    private function getDeleteBlockReason(User $user): string
+    {
+        if ($user->isSuperAdmin() && User::where('super_admin', true)->count() === 1) {
+            return __('This is the only super admin account. It cannot be deleted.');
+        }
+
+        if (! auth()->user()->isSuperAdmin() && $user->organizations()->count() > 1) {
+            return __('This user belongs to multiple organizations. Remove them from this organization instead.');
+        }
+
+        return '';
+    }
+
+    private function getRemoveBlockReason(User $user): string
+    {
+        if ($user->organizations()->count() <= 1) {
+            return __('This user only belongs to this organization. Removing them would leave them without access.');
+        }
+
+        return '';
     }
 
     public function render(): View

@@ -61,7 +61,7 @@ test('can search users by name', function () {
 });
 
 describe('delete', function () {
-    test('delete authorization', function (string $actorType, bool $targetSuperAdmin, int $targetOrgCount, bool $allowed) {
+    test('delete authorization', function (string $actorType, bool $targetSuperAdmin, int $targetOrgCount, string $expected) {
         $actor = $actorType === 'super_admin'
             ? $this->admin
             : User::factory()->admin()->create();
@@ -80,21 +80,29 @@ describe('delete', function () {
         $component = Livewire::test(Index::class)
             ->call('confirmDelete', $target->id);
 
-        if ($allowed) {
-            $component->assertSet('showDeleteModal', true)
-                ->call('delete')
-                ->assertSet('showDeleteModal', false);
-            expect(User::find($target->id))->toBeNull();
-        } else {
-            $component->assertForbidden();
-        }
+        match ($expected) {
+            'allowed' => tap($component, function ($c) use ($target) {
+                $c->assertSet('showDeleteModal', true)
+                    ->assertSet('deleteBlockReason', '')
+                    ->call('delete')
+                    ->assertSet('showDeleteModal', false);
+                expect(User::find($target->id))->toBeNull();
+            }),
+            'forbidden' => $component->assertForbidden(),
+            'blocked' => tap($component, function ($c) use ($target) {
+                $c->assertSet('showDeleteModal', true)
+                    ->assertNotSet('deleteBlockReason', '');
+                $c->call('delete');
+                expect(User::find($target->id))->not->toBeNull();
+            }),
+        };
     })->with([
-        'super admin deletes regular user (1 org)' => ['super_admin', false, 1, true],
-        'super admin deletes regular user (2 orgs)' => ['super_admin', false, 2, true],
-        'super admin deletes super admin (not last)' => ['super_admin', true, 1, true],
-        'org admin deletes regular user (1 org)' => ['admin', false, 1, true],
-        'org admin cannot delete user in multiple orgs' => ['admin', false, 2, false],
-        'org admin cannot delete super admin' => ['admin', true, 1, false],
+        'super admin deletes regular user (1 org)' => ['super_admin', false, 1, 'allowed'],
+        'super admin deletes regular user (2 orgs)' => ['super_admin', false, 2, 'allowed'],
+        'super admin deletes super admin (not last)' => ['super_admin', true, 1, 'allowed'],
+        'org admin deletes regular user (1 org)' => ['admin', false, 1, 'allowed'],
+        'org admin blocked from deleting user in multiple orgs' => ['admin', false, 2, 'blocked'],
+        'org admin cannot delete super admin' => ['admin', true, 1, 'forbidden'],
     ]);
 
     test('cannot delete yourself', function () {
@@ -107,7 +115,7 @@ describe('delete', function () {
 });
 
 describe('remove from organization', function () {
-    test('remove from org authorization', function (string $actorType, bool $targetSuperAdmin, int $targetOrgCount, bool $allowed) {
+    test('remove from org authorization', function (string $actorType, bool $targetSuperAdmin, int $targetOrgCount, string $expected) {
         $actor = $actorType === 'super_admin'
             ? $this->admin
             : User::factory()->admin()->create();
@@ -126,24 +134,31 @@ describe('remove from organization', function () {
         $component = Livewire::test(Index::class)
             ->call('confirmRemoveFromOrg', $target->id);
 
-        if ($allowed) {
-            $component->assertSet('showRemoveModal', true)
-                ->call('removeFromOrg')
-                ->assertSet('showRemoveModal', false);
+        $currentOrgId = app(\App\Services\CurrentOrganization::class)->id();
 
-            // User still exists but is no longer in the current org
-            expect(User::find($target->id))->not->toBeNull();
-            $currentOrgId = app(\App\Services\CurrentOrganization::class)->id();
-            expect($target->fresh()->organizations()->where('organization_id', $currentOrgId)->exists())->toBeFalse();
-        } else {
-            $component->assertForbidden();
-        }
+        match ($expected) {
+            'allowed' => tap($component, function ($c) use ($target, $currentOrgId) {
+                $c->assertSet('showRemoveModal', true)
+                    ->assertSet('removeBlockReason', '')
+                    ->call('removeFromOrg')
+                    ->assertSet('showRemoveModal', false);
+                expect(User::find($target->id))->not->toBeNull();
+                expect($target->fresh()->organizations()->where('organization_id', $currentOrgId)->exists())->toBeFalse();
+            }),
+            'forbidden' => $component->assertForbidden(),
+            'blocked' => tap($component, function ($c) use ($target, $currentOrgId) {
+                $c->assertSet('showRemoveModal', true)
+                    ->assertNotSet('removeBlockReason', '');
+                $c->call('removeFromOrg');
+                expect($target->fresh()->organizations()->where('organization_id', $currentOrgId)->exists())->toBeTrue();
+            }),
+        };
     })->with([
-        'super admin removes user (2 orgs)' => ['super_admin', false, 2, true],
-        'org admin removes user (2 orgs)' => ['admin', false, 2, true],
-        'cannot remove user in single org (super admin)' => ['super_admin', false, 1, false],
-        'cannot remove user in single org (org admin)' => ['admin', false, 1, false],
-        'org admin cannot remove super admin' => ['admin', true, 2, false],
+        'super admin removes user (2 orgs)' => ['super_admin', false, 2, 'allowed'],
+        'org admin removes user (2 orgs)' => ['admin', false, 2, 'allowed'],
+        'super admin blocked from removing user in single org' => ['super_admin', false, 1, 'blocked'],
+        'org admin blocked from removing user in single org' => ['admin', false, 1, 'blocked'],
+        'org admin cannot remove super admin' => ['admin', true, 2, 'forbidden'],
     ]);
 
     test('cannot remove yourself from org', function () {

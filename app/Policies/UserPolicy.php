@@ -57,8 +57,9 @@ class UserPolicy
 
     /**
      * Determine whether the user can delete the model.
-     * Super admins can always delete (except self/last SA).
-     * Org admins can delete users who belong to only one organization.
+     * Super admins can delete any user (except self).
+     * Org admins can delete non-SA users in their org.
+     * Business rules (last SA, multi-org) are checked at action time.
      */
     public function delete(User $user, User $model): bool
     {
@@ -67,10 +68,6 @@ class UserPolicy
         }
 
         if ($user->isSuperAdmin()) {
-            if ($model->isSuperAdmin() && User::where('super_admin', true)->count() === 1) {
-                return false;
-            }
-
             return true;
         }
 
@@ -78,21 +75,16 @@ class UserPolicy
 
         return $currentOrg->isOrgAdmin()
             && ! $model->isSuperAdmin()
-            && $model->belongsToOrganization($currentOrg->model())
-            && $model->organizations()->count() === 1;
+            && $model->belongsToOrganization($currentOrg->model());
     }
 
     /**
      * Determine whether the user can remove the model from the current organization.
-     * Only available when the target belongs to more than one organization.
+     * Business rules (single-org check) are checked at action time.
      */
     public function removeFromOrganization(User $user, User $model): bool
     {
         if ($user->id === $model->id) {
-            return false;
-        }
-
-        if ($model->organizations()->count() <= 1) {
             return false;
         }
 

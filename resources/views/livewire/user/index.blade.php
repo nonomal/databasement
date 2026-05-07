@@ -115,23 +115,39 @@
     </x-card>
 
     <!-- DELETE CONFIRMATION MODAL -->
-    <x-delete-confirmation-modal
-        :title="__('Delete User')"
-        :message="__('Are you sure you want to delete this user? This action cannot be undone.')"
-        onConfirm="delete"
-    >
-        <x-alert icon="o-information-circle" class="alert-info mt-4">
-            {!! __('Database servers, backups, snapshots, and other resources created by this user <strong>WILL NOT</strong> be deleted and will remain accessible.') !!}
-        </x-alert>
-    </x-delete-confirmation-modal>
+    <x-modal wire:model="showDeleteModal" :title="__('Delete User')" class="backdrop-blur">
+        @if($deleteBlockReason)
+            <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                {{ $deleteBlockReason }}
+            </x-alert>
+        @else
+            <p>{{ __('Are you sure you want to delete this user? This action cannot be undone.') }}</p>
+            <x-alert icon="o-information-circle" class="alert-info mt-4">
+                {!! __('Database servers, backups, snapshots, and other resources created by this user <strong>WILL NOT</strong> be deleted and will remain accessible.') !!}
+            </x-alert>
+        @endif
+        <x-slot:actions>
+            <x-button :label="__('Cancel')" @click="$wire.showDeleteModal = false" />
+            @unless($deleteBlockReason)
+                <x-button :label="__('Delete')" class="btn-error" wire:click="delete" spinner="delete" />
+            @endunless
+        </x-slot:actions>
+    </x-modal>
 
     <!-- REMOVE FROM ORG CONFIRMATION MODAL -->
     <x-modal wire:model="showRemoveModal" :title="__('Remove User from Organization')" class="backdrop-blur">
-        <p>{{ __('Are you sure you want to remove this user from the current organization? The user will retain access to other organizations they belong to.') }}</p>
-
+        @if($removeBlockReason)
+            <x-alert icon="o-exclamation-triangle" class="alert-warning">
+                {{ $removeBlockReason }}
+            </x-alert>
+        @else
+            <p>{{ __('Are you sure you want to remove this user from the current organization? The user will retain access to other organizations they belong to.') }}</p>
+        @endif
         <x-slot:actions>
             <x-button :label="__('Cancel')" @click="$wire.showRemoveModal = false" />
-            <x-button :label="__('Remove')" class="btn-warning" wire:click="removeFromOrg" spinner="removeFromOrg" />
+            @unless($removeBlockReason)
+                <x-button :label="__('Remove')" class="btn-warning" wire:click="removeFromOrg" spinner="removeFromOrg" />
+            @endunless
         </x-slot:actions>
     </x-modal>
 
