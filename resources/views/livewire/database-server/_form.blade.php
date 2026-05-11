@@ -104,7 +104,7 @@ use App\Enums\DatabaseType;
                 <!-- Database Type Selection -->
                 <div>
                     <label class="label label-text font-semibold mb-2">{{ __('Database Type') }}</label>
-                    <x-radio-card-group class="grid-cols-2 sm:grid-cols-5" :label="__('Database Type')">
+                    <x-radio-card-group class="grid-cols-2 sm:grid-cols-3 lg:grid-cols-6" :label="__('Database Type')">
                         @foreach(DatabaseType::cases() as $dbType)
                             <x-radio-card
                                 :active="$form->database_type === $dbType->value"
