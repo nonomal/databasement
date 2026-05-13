@@ -1,5 +1,6 @@
 <div>
-    <x-modal wire:model="showModal" :title="__('Restore Database Snapshot')" box-class="max-w-3xl w-11/12" class="backdrop-blur">
+    <x-modal wire:model="showModal" box-class="max-w-3xl w-11/12" class="backdrop-blur">
+        <x-header :title="__('Restore Database Snapshot')" icon="bi.database-fill-down" icon-classes="text-success w-6 h-6" size="text-xl" class="!mb-5" />
         <div class="space-y-4">
             {{-- Locked context badges --}}
             @if($mode->targetServerLocked() && $targetServer)

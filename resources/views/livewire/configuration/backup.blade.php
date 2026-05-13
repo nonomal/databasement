@@ -46,7 +46,7 @@
                             @if ($this->isAdmin)
                                 <div class="flex items-center gap-0.5 shrink-0 ml-auto">
                                     @if ($schedule->backups_count > 0)
-                                        <x-button icon="o-play" class="btn-ghost btn-sm" wire:click="runSchedule('{{ $schedule->id }}')" spinner="runSchedule('{{ $schedule->id }}')" :tooltip-left="__('Run now')" />
+                                        <x-button icon="bi.database-fill-up" class="btn-ghost btn-sm text-info" wire:click="runSchedule('{{ $schedule->id }}')" spinner="runSchedule('{{ $schedule->id }}')" :tooltip-left="__('Run now')" />
                                     @endif
                                     <x-button icon="o-pencil-square" class="btn-ghost btn-sm" wire:click="openScheduleModal('{{ $schedule->id }}')" :tooltip-left="__('Edit')" />
                                     @if ($schedule->total_backups_count > 0)

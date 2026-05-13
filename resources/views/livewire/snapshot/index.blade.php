@@ -118,7 +118,7 @@
                                 icon="bi.database-fill-down"
                                 wire:click="triggerRestore('{{ $snapshot->id }}')"
                                 :tooltip="__('Restore')"
-                                class="btn-ghost btn-sm text-primary"
+                                class="btn-ghost btn-sm text-success"
                             />
                         @endcan
                     @endif
@@ -129,7 +129,7 @@
                                 :link="route('snapshots.download', $snapshot)"
                                 external
                                 :tooltip="__('Download')"
-                                class="btn-ghost btn-sm text-info"
+                                class="btn-ghost btn-sm text-primary"
                             />
                         @endcan
                     @endif
