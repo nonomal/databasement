@@ -11,8 +11,6 @@ services:
       - app-data:/data
     ports:
       - "2226:2226"
-    extra_hosts:
-      - "dex-local:host-gateway"
     environment:
       TZ: UTC
       XDG_CONFIG_HOME: /tmp
@@ -201,6 +199,10 @@ services:
       - ./docker/dex/config.yaml:/etc/dex/config.yaml:ro
     ports:
       - "127.0.0.1:5556:5556"
+    networks:
+      default:
+        aliases:
+          - dex-local
     command: ["dex", "serve", "/etc/dex/config.yaml"]
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:5556/dex/.well-known/openid-configuration"]
