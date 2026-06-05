@@ -214,6 +214,12 @@ GRANT RDB$ADMIN TO databasement;
 Restore is performed with `gbak -rep`, which writes a fresh `.fdb` at the target path and replaces an existing file at that path if one is present. The user supplies the destination path during restore.
 :::
 
+## Browsing Data with Adminer
+
+Databasement can launch [Adminer](https://www.adminer.org/) directly against a registered server to inspect schema and run queries from the browser. Supported for **MySQL**, **PostgreSQL**, and **SQLite** servers that connect without an SSH tunnel.
+
+Enabled by default for Admins only. A Super Admin can change the minimum required role (Viewer, Member, or Admin) or disable the feature entirely under **Configuration → Application**. When enabled, a *Browse* action appears on compatible servers in the Database Servers list and opens Adminer pre-authenticated with the server's stored credentials.
+
 ## Troubleshooting Connection Issues
 
 ### Common Connection Issues
